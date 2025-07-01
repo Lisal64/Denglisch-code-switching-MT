@@ -1,0 +1,23 @@
+[project]
+name = "denglisch-code-switching-mt"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.12, <3.13"
+dependencies = [
+    "absl-py>=2.3.0",
+    "bleu>=0.3",
+    "datasets>=3.6.0",
+    "dotenv>=0.9.9",
+    "evaluate>=0.4.4",
+    "meteor>=2.0.18",
+    "nltk>=3.9.1",
+    "numpy<2.0",
+    "rouge>=1.0.1",
+    "rouge-score>=0.1.2",
+    "sacrebleu>=2.5.1",
+    "scikit-learn>=1.7.0",
+    "sentencepiece>=0.2.0",
+    "torch>=2.7.1",
+    "transformers[torch]>=4.53.0",
+]
