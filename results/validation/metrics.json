@@ -1,0 +1,23 @@
+{
+  "eval_loss": 0.7895662188529968,
+  "eval_bleu": 0.48690348363852887,
+  "eval_meteor": 0.7530993670097483,
+  "eval_sacrebleu": 48.6903483638529,
+  "eval_rougeL": 0.7319849541392618,
+  "eval_runtime": 19.9078,
+  "eval_samples_per_second": 4.872,
+  "eval_steps_per_second": 1.256,
+  "epoch": 6.0
+},
+"train_metrics": {
+  "eval_loss": 0.35068756341934204,
+  "eval_bleu": 0.6743600460149083,
+  "eval_meteor": 0.8597993436559315,
+  "eval_sacrebleu": 67.43600460149086,
+  "eval_rougeL": 0.8592819321693719,
+  "eval_runtime": 187.3993,
+  "eval_samples_per_second": 4.136,
+  "eval_steps_per_second": 1.035,
+  "epoch": 6.0
+}
+}
