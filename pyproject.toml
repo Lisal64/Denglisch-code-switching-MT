@@ -13,6 +13,7 @@ dependencies = [
     "meteor>=2.0.18",
     "nltk>=3.9.1",
     "numpy<2.0",
+    "protobuf>=6.31.1",
     "rouge>=1.0.1",
     "rouge-score>=0.1.2",
     "sacrebleu>=2.5.1",
