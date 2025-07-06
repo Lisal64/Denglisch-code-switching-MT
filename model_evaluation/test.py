@@ -30,9 +30,9 @@ if __name__ == "__main__":
     )
 
     lang_pos = MBARTEvaluator(
-        model_path="models/mBART_hybrid_lang+pos",
-        dataset_path="filtered_datasets/mBART_dataset/hybrid",
-        output_dir="results/mBART_hybrid_lang+pos/test_metrics"
+        model_path="models/mBART_threshold_lang+pos",
+        dataset_path="filtered_datasets/mBART_dataset/threshold",
+        output_dir="results/mBART_threshold_lang+pos/test_metrics"
     )
 
     for evaluator in [baseline, finetuned, lang, pos, lang_pos]:
