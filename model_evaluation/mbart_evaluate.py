@@ -53,16 +53,28 @@ class MBARTEvaluator:
         model_input["labels"] = labels
         return model_input
 
-    def evaluate(self):
+    def evaluate(self, params=None):
         dataset = load_dataset("json", data_files={"test": f"{self.dataset_path}/test.json"})["test"]
         dataset = dataset.map(self.preprocess)
 
+        batch_size = 4
+        num_beams = 4
+        generation_max_length = 128
+
+        if params:
+            batch_size = params.get("batch_size", batch_size)
+            num_beams = params.get("num_beams", num_beams)
+            generation_max_length = params.get("generation_max_length", generation_max_length)
+
+            if "dropout" in params:
+                self.model.config.dropout = params["dropout"]
+
         args = Seq2SeqTrainingArguments(
             output_dir="./tmp_eval",  # Temporary directory
-            per_device_eval_batch_size=4,
+            per_device_eval_batch_size=batch_size,
             predict_with_generate=True,
-            generation_max_length=128,
-            generation_num_beams=4,
+            generation_max_length=generation_max_length,
+            generation_num_beams=num_beams,
             report_to="none"
         )
 

@@ -24,7 +24,7 @@ class MBARTFineTuner:
         self.dataset_path = dataset_path
         self.strategy_name = strategy_name 
         self.context_type = context_type
-        self.output_dir = f"results/mBART_{strategy_name}_{context_type}"
+        self.output_dir = f"results_tuned/mBART_{strategy_name}_{context_type}"
         self.model_dir = f"models/mBART_{strategy_name}_{context_type}"
 
         self.tokenizer = MBartTokenizerFast.from_pretrained(model_name)
@@ -131,7 +131,7 @@ class MBARTFineTuner:
             learning_rate=learning_rate,
             per_device_train_batch_size=batch_size,
             per_device_eval_batch_size=batch_size,
-            num_train_epochs=6,
+            num_train_epochs=num_train_epochs,
             predict_with_generate=True,
             generation_max_length=128,
             generation_num_beams=num_beams,
@@ -201,6 +201,7 @@ class MBARTFineTuner:
         weight_decay = params.get("weight_decay", 0.0) if params else 0.01
         warmup_ratio = params.get("warmup_ratio", 0.0) if params else 0.0
         label_smoothing = params.get("label_smoothing", 0.0) if params else 0.0
+        num_train_epochs = params.get("num_train_epochs", 6) if params else 6
         gradient_accumulation_steps = params.get("gradient_accumulation_steps", 1) if params else 1
         
         training_args = Seq2SeqTrainingArguments(
@@ -210,7 +211,7 @@ class MBARTFineTuner:
             learning_rate=learning_rate,
             per_device_train_batch_size=batch_size,
             per_device_eval_batch_size=batch_size,
-            num_train_epochs=6,
+            num_train_epochs=num_train_epochs,
             predict_with_generate=True,
             generation_max_length=128,
             generation_num_beams=num_beams,
@@ -252,5 +253,7 @@ class MBARTFineTuner:
         train_metrics = trainer.evaluate(eval_dataset=dataset["train"])
         with open(f"{self.output_dir}/train_metrics.json", "w", encoding="utf-8") as f:
             json.dump(train_metrics, f, indent=2, ensure_ascii=False)
-
+        del trainer
+        torch.cuda.empty_cache()
+        gc.collect()
         print(f"Finished: {self.context_type}")

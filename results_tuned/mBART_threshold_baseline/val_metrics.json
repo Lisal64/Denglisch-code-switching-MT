@@ -3,9 +3,9 @@
   "eval_bleu": 0.5850897143019825,
   "eval_meteor": 0.7815099480552664,
   "eval_sacrebleu": 58.50897143019824,
-  "eval_rougeL": 0.7872152356337194,
-  "eval_runtime": 28.7554,
-  "eval_samples_per_second": 4.59,
-  "eval_steps_per_second": 1.148,
+  "eval_rougeL": 0.7882393537254526,
+  "eval_runtime": 28.5915,
+  "eval_samples_per_second": 4.617,
+  "eval_steps_per_second": 1.154,
   "epoch": 6.0
 }
