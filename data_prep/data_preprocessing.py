@@ -15,7 +15,7 @@ def save_all_datasets(input_csv, output_dir="filtered_datasets", model="mBART"):
 
     for strategy in strategies:
         if model == "mT5":
-            print(f"📦 Creating dataset for strategy: {strategy}")
+            print(f"Creating dataset for strategy: {strategy}")
             dataset_dict: DatasetDict = prepare_hf_mt5_dataset(
                 input_csv_path=input_csv,
                 strategy=strategy,
@@ -32,7 +32,7 @@ def save_all_datasets(input_csv, output_dir="filtered_datasets", model="mBART"):
                 dataset_dict[split].to_json(split_path)
                 print(f"Saved {len(dataset_dict[split])} examples to: {split_path}")
         else:
-            print(f"📦 Creating dataset for strategy: {strategy}")
+            print(f"Creating dataset for strategy: {strategy}")
             dataset_dict: DatasetDict = prepare_hf_mbart_dataset(
                 input_csv_path=input_csv,
                 strategy=strategy,

@@ -1,0 +1,11 @@
+{
+  "learning_rate": 0.00031474186993045395,
+  "batch_size": 16,
+  "weight_decay": 0.23742424713587346,
+  "warmup_ratio": 0.261358296652641,
+  "label_smoothing": 0.16964835828466174,
+  "num_beams": 8,
+  "num_train_epochs": 3,
+  "gradient_accumulation_steps": 1,
+  "dropout": 0.30106605357613025
+}
