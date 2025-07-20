@@ -1,0 +1,11 @@
+{
+  "eval_loss": 3.29764461517334,
+  "eval_bleu": 0.3437463643113147,
+  "eval_meteor": 0.661113862905979,
+  "eval_sacrebleu": 34.374636431131464,
+  "eval_rougeL": 0.6176133361594425,
+  "eval_runtime": 31.6211,
+  "eval_samples_per_second": 3.068,
+  "eval_steps_per_second": 0.791,
+  "epoch": 6.0
+}

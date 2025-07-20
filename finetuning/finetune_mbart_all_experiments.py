@@ -1,6 +1,11 @@
 import os
 import json
 import numpy as np
+import optuna
+from transformers import set_seed
+import torch
+import gc
+
 from datasets import load_dataset
 from transformers import (
     MBartTokenizerFast,
@@ -106,7 +111,81 @@ class MBARTFineTuner:
             "rougeL": self.metrics["rouge"].compute(predictions=decoded_preds, references=[l[0] for l in decoded_labels])["rougeL"]
         }
 
-    def run(self):
+    def objective(self, trial):
+        # Suggest hyperparameters
+        learning_rate = trial.suggest_loguniform("learning_rate", 1e-5, 5e-4)
+        batch_size = trial.suggest_categorical("batch_size", [4, 8, 16])
+        weight_decay = trial.suggest_float("weight_decay", 0.0, 0.3)
+        warmup_ratio = trial.suggest_float("warmup_ratio", 0.0, 0.3)
+        label_smoothing = trial.suggest_float("label_smoothing", 0.0, 0.2)
+        num_beams = trial.suggest_int("num_beams", 1, 8)
+        num_train_epochs = trial.suggest_int("num_train_epochs", 3, 8)
+        gradient_accumulation_steps = trial.suggest_categorical("gradient_accumulation_steps", [1, 2, 4])
+        self.model.config.dropout = trial.suggest_float("dropout", 0.1, 0.4)
+
+        # Setup training args dynamically
+        training_args = Seq2SeqTrainingArguments(
+            output_dir=os.path.join(self.model_dir, f"trial_{trial.number}"),
+            eval_strategy="epoch",
+            save_strategy="epoch",
+            learning_rate=learning_rate,
+            per_device_train_batch_size=batch_size,
+            per_device_eval_batch_size=batch_size,
+            num_train_epochs=6,
+            predict_with_generate=True,
+            generation_max_length=128,
+            generation_num_beams=num_beams,
+            weight_decay=weight_decay,
+            warmup_ratio=warmup_ratio,
+            label_smoothing_factor=label_smoothing,
+            gradient_accumulation_steps=gradient_accumulation_steps,
+        )
+
+        data_collator = DataCollatorForSeq2Seq(self.tokenizer, model=self.model)
+
+        trainer = Seq2SeqTrainer(
+            model=self.model,
+            args=training_args,
+            train_dataset=self.dataset["train"],
+            eval_dataset=self.dataset["validation"],
+            tokenizer=self.tokenizer,
+            data_collator=data_collator,
+            compute_metrics=self.compute_metrics
+        )
+
+        eval_result = trainer.evaluate()
+        score = eval_result["eval_bleu"]
+
+        del trainer
+        torch.cuda.empty_cache()
+        gc.collect()
+
+        return score
+
+    def tune_hyperparameters(self, n_trials=10):
+        print("Running hyperparameter search...")
+        self.dataset = load_dataset("json", data_files={
+            "train": f"{self.dataset_path}/train.json",
+            "validation": f"{self.dataset_path}/validation.json",
+            "test": f"{self.dataset_path}/test.json"
+        })
+        self.dataset = self.dataset.map(lambda x: self.preprocess(x), batched=True)
+        self.dataset = self.dataset.remove_columns(["tokens", "langs", "pos_tags"])
+
+        set_seed(42)
+        study = optuna.create_study(direction="maximize")
+        study.optimize(self.objective, n_trials=n_trials)
+
+        print("Best hyperparameters:", study.best_params)
+
+        # Save the best config
+        os.makedirs(self.output_dir, exist_ok=True)
+        with open(f"{self.output_dir}/best_hyperparameters.json", "w", encoding="utf-8") as f:
+            json.dump(study.best_params, f, indent=2, ensure_ascii=False)
+
+        return study.best_params
+
+    def run(self, params=None):
         dataset = load_dataset("json", data_files={
             "train": f"{self.dataset_path}/train.json",
             "validation": f"{self.dataset_path}/validation.json",
@@ -116,17 +195,29 @@ class MBARTFineTuner:
         dataset = dataset.map(lambda x: self.preprocess(x), batched=True)
         dataset = dataset.remove_columns(["tokens", "langs", "pos_tags"])
 
+        learning_rate = params.get("learning_rate", 3e-5) if params else 3e-5
+        batch_size = params.get("batch_size", 4) if params else 4
+        num_beams = params.get("num_beams", 4) if params else 4
+        weight_decay = params.get("weight_decay", 0.0) if params else 0.01
+        warmup_ratio = params.get("warmup_ratio", 0.0) if params else 0.0
+        label_smoothing = params.get("label_smoothing", 0.0) if params else 0.0
+        gradient_accumulation_steps = params.get("gradient_accumulation_steps", 1) if params else 1
+        
         training_args = Seq2SeqTrainingArguments(
             output_dir=self.model_dir,
             eval_strategy="epoch",
             save_strategy="epoch",
-            learning_rate=3e-5,
-            per_device_train_batch_size=4,
-            per_device_eval_batch_size=4,
+            learning_rate=learning_rate,
+            per_device_train_batch_size=batch_size,
+            per_device_eval_batch_size=batch_size,
             num_train_epochs=6,
             predict_with_generate=True,
             generation_max_length=128,
-            generation_num_beams=4,
+            generation_num_beams=num_beams,
+            weight_decay=weight_decay,
+            warmup_ratio=warmup_ratio,
+            label_smoothing_factor=label_smoothing,
+            gradient_accumulation_steps=gradient_accumulation_steps,
             logging_dir=f"{self.model_dir}/logs",
             logging_steps=10,
             save_total_limit=1,
