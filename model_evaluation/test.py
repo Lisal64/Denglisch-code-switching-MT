@@ -1,39 +1,38 @@
 from model_evaluation.mbart_evaluate import MBARTEvaluator
 from dotenv import load_dotenv
+import json
 import os
 
 if __name__ == "__main__":
     load_dotenv()
 
-    baseline = MBARTEvaluator(
-        model_path="facebook/mbart-large-50",
-        dataset_path="filtered_datasets/mBART_dataset/threshold",
-        output_dir="results/mBART_threshold_base/test_metrics"
-    )
+    strategies = ["ratio", "threshold", "hybrid"]
+    for strategy_name in strategies:
+        dataset_base = f"filtered_datasets/mBART_dataset/{strategy_name}"
+        model_base = f"models/mBART_{strategy_name}_"
+        output_base = f"results_tuned/mBART_{strategy_name}_"
 
-    finetuned = MBARTEvaluator(
-        model_path="models/mBART_threshold_baseline",
-        dataset_path="filtered_datasets/mBART_dataset/threshold",
-        output_dir="results/mBART_threshold_baseline/test_metrics"
-    )
+        contexts = ["baseline", "lang", "pos", "lang+pos"]
 
-    lang = MBARTEvaluator(
-        model_path="models/mBART_threshold_lang",
-        dataset_path="filtered_datasets/mBART_dataset/threshold",
-        output_dir="results/mBART_threshold_lang/test_metrics"
-    )
+        evaluators = []
 
-    pos = MBARTEvaluator(
-        model_path="models/mBART_threshold_pos",
-        dataset_path="filtered_datasets/mBART_dataset/threshold",
-        output_dir="results/mBART_threshold_pos/test_metrics"
-    )
+        for context in contexts:
+            model_path = os.path.join(model_base + context)
+            dataset_path = dataset_base
+            output_dir = os.path.join(output_base + context, "test_metrics")
+            hyperparam_path = os.path.join(output_base + context, "best_hyperparameters.json")
 
-    lang_pos = MBARTEvaluator(
-        model_path="models/mBART_threshold_lang+pos",
-        dataset_path="filtered_datasets/mBART_dataset/threshold",
-        output_dir="results/mBART_threshold_lang+pos/test_metrics"
-    )
+            evaluator = MBARTEvaluator(
+                model_path=model_path,
+                dataset_path=dataset_path,
+                output_dir=output_dir
+            )
 
-    for evaluator in [baseline, finetuned, lang, pos, lang_pos]:
-        results, preds, labels = evaluator.evaluate()
+            if os.path.exists(hyperparam_path):
+                with open(hyperparam_path, "r") as f:
+                    best_params = json.load(f)
+            else:
+                best_params = None
+
+            print(f"\nEvaluating: {context}")
+            results, preds, labels = evaluator.evaluate(params=best_params)
